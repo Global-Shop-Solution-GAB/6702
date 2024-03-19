@@ -1,0 +1,90 @@
+﻿Program.Sub.ScreenSU.Start
+Gui.F_Invoice..Create(BaseForm)
+Gui.F_Invoice..Caption("Invoice Info")
+Gui.F_Invoice..Size(367,137)
+Gui.F_Invoice..MinX(0)
+Gui.F_Invoice..MinY(0)
+Gui.F_Invoice..Position(0,0)
+Gui.F_Invoice..AlwaysOnTop(False)
+Gui.F_Invoice..FontName("Tahoma")
+Gui.F_Invoice..FontSize(8.25)
+Gui.F_Invoice..ControlBox(True)
+Gui.F_Invoice..MaxButton(False)
+Gui.F_Invoice..MinButton(True)
+Gui.F_Invoice..MousePointer(0)
+Gui.F_Invoice..Moveable(True)
+Gui.F_Invoice..Sizeable(False)
+Gui.F_Invoice..ShowInTaskBar(True)
+Gui.F_Invoice..TitleBar(True)
+Gui.F_Invoice..Event(UnLoad,F_Invoice_UnLoad)
+Gui.F_Invoice.gsgcBatches.Create(GsGridControl)
+Gui.F_Invoice.gsgcBatches.Enabled(True)
+Gui.F_Invoice.gsgcBatches.Visible(True)
+Gui.F_Invoice.gsgcBatches.Zorder(0)
+Gui.F_Invoice.gsgcBatches.Size(1024,690)
+Gui.F_Invoice.gsgcBatches.Position(0,0)
+Gui.F_Invoice.gsgcBatches.Dock(5)
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+V.Local.sWindowText.Declare
+V.Local.sInvoice.Declare
+V.Local.sVendor.Declare
+V.Local.sSQL.Declare
+Function.Intrinsic.UI.UsePixels ' Allows you to use Pixels instead of Twips throughout
+
+F.Intrinsic.Control.If(V.Caller.Hook,=,39810)
+	'Comments Populate
+	V.Passed.000203.Set("Invoice Info")
+F.Intrinsic.Control.ElseIf(V.Caller.Hook,=,39832)
+	'Comments Script 3
+	'Get batch info for invoice
+	F.Intrinsic.API.GetWindowText(V.Caller.Handle,V.Local.sWindowText)
+	F.Intrinsic.String.Split(V.Local.sWindowText,"Invoice: ",V.Local.sInvoice)
+	F.Intrinsic.Control.If(V.Local.sInvoice.UBound,>,0)
+		'Invoice populated
+		F.Intrinsic.String.Split(V.Local.sWindowText,"Vendor: ",V.Local.sVendor)
+		F.Intrinsic.String.Split(V.Local.sVendor(1)," ",V.Local.sVendor)
+		V.Local.sVendor.RedimPreserve(0,0)
+		F.Intrinsic.String.Split(V.Local.sInvoice(1)," ",V.Local.sInvoice)
+		V.Local.sInvoice.RedimPreserve(0,0)
+		
+		F.Intrinsic.String.Build("Invoice Info - {0} - Ven {1}",V.Local.sInvoice,V.Local.sVendor,V.Local.sWindowText)
+		Gui.F_Invoice..Caption(V.Local.sWindowText)
+		
+		'Pull in Invoice Info
+		F.Intrinsic.String.Build("select 0 as InvLine, rtrim(BATCH_NUM) as Batch, DATE_BATCH as PostDate from V_AP_OPEN_ITEMS where INVOICE = '{0}' and VENDOR = '{1}' order by DATE_BATCH;",V.Local.sInvoice,V.Local.sVendor,V.Local.sSQL)
+		F.ODBC.Connection!con.OpenCompanyConnection
+		F.Data.DataTable.CreateFromSQL("dtInvoiceLines","con",V.Local.sSQL,True)
+		F.ODBC.Connection!con.Close
+		
+		F.Data.DataTable.SetSeries("dtInvoiceLines","InvLine",1,1)
+		
+		Gui.F_Invoice.gsgcBatches.AddGridviewFromDatatable("gvInvoiceLines","dtInvoiceLines")
+		
+		Gui.F_Invoice.gsgcBatches.SetColumnProperty("gvInvoiceLines","InvLine","Caption","Line")
+		Gui.F_Invoice.gsgcBatches.SetColumnProperty("gvInvoiceLines","PostDate","Caption","Post Date")
+		Gui.F_Invoice.gsgcBatches.SetColumnProperty("gvInvoiceLines","PostDate","DisplayCustomDateTime","d")
+		
+		Gui.F_Invoice.gsgcBatches.MainView("gvInvoiceLines")
+		
+		Gui.F_Invoice..Show
+	F.Intrinsic.Control.Else
+		'Invoice not populated
+		F.Intrinsic.UI.Msgbox("No invoice number passed to comments screen.")
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.EndIf
+
+Program.Sub.Main.End
+
+Program.Sub.F_Invoice_UnLoad.Start
+F.Intrinsic.Control.End
+Program.Sub.F_Invoice_UnLoad.End
+
+Program.Sub.Comments.Start
+${$5$}$3.0.0.0$}$1
+${$6$}$bbaker$}$20220419153451658$}$pM7xsHplA2E9VCTenDTJ47gi1rF/t66WPq/oNahxCVFRdVmSr/rv7gHiP1H4gEazfPv8e20cZUk=
+Program.Sub.Comments.End
